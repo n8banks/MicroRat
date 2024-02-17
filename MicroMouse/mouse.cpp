@@ -22,32 +22,13 @@ class Mouse
         void constructMaze(string filename);
         void findSurroundingValues(int surroundingSquares[NUMSQUARES]);
         void updateMouse();
-        bool navigate(int possibleDirections[NUMSQUARES])
+        bool navigate(int possibleDirections[NUMSQUARES]);
 
 };
 
-string Maze :: printArray()
-{
-    int i, j;
-    float number = 0;
-    std :: ostringstream retval;
-    string end;
-    for(i = 0; i < row; i++)
-    {
-        for(j = 0; j < col; j++)
-        {
-            retval << std::right << std::setw(4) << mazeArray[i][j];
-        }
-        end = i == row - 1 ? "" : "\n"; 
-        retval << end << end;
-    }
-    return retval.str();
-}
-
-Mouse :: Mouse(string filename)
+Mouse :: Mouse(string filename) : maze(filename)
 {
     // input for maze file
-    maze = Maze(filename);
 
     // iterators, offset for row and col and the maze/mouse itself
 
