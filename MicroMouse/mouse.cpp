@@ -1,4 +1,4 @@
-#include <maze.hpp>
+#include "maze.hpp"
 
 
 using namespace std;
@@ -16,8 +16,11 @@ class Mouse
         bool atGoal;
 
         Maze maze;
+
+        Mouse(string filename);
         int checkDirection();
         void constructMaze(string filename);
+        void findSurroundingValues(int surroundingSquares[NUMSQUARES]);
         void updateMouse();
         bool navigate(int possibleDirections[NUMSQUARES])
 
@@ -41,50 +44,19 @@ string Maze :: printArray()
     return retval.str();
 }
 
-void Mouse :: constructMaze(string filename)
+Mouse :: Mouse(string filename)
 {
     // input for maze file
-    ifstream ift;
-    string line;
-    string tempLine;
+    maze = Maze(filename);
 
     // iterators, offset for row and col and the maze/mouse itself
-    int i, j, offsetRow, offsetCol, startPosX, startPosY, startOrientation;
 
-    // opens file using filename param
-    ift.open(filename);
-
-    startPosX = maze.startPosX; 
-    startPosY = maze.startPosY;
-    startOrientation = maze.startOrientation;
-    offsetRow = maze.goalCoords[0][0]; 
-    offsetCol = maze.goalCoords[0][1];
-    for(i = 0; i < maze.row; i++)
-    {
-        // resets osC value after every iteration
-        offsetCol = maze.goalCoords[0][1];
-
-        // checks to see if past goal meaning osR needs to increase
-        if(i > maze.goalCoords[0][0])
-        {
-            offsetRow = maze.goalCoords[2][0];
-        }
-        for(j = 0; j < maze.col; j++)
-        {
-            // checks to see if past goal meaning osC needs to increase
-            if(j > maze.goalCoords[0][1])
-            {
-                offsetCol = maze.goalCoords[1][1];
-            }
-            // assigning values to each element of 2D array
-            maze.mazeArray[i][j] = abs(offsetRow - i) + abs(offsetCol - j);
-        }
-    }
-
-    currentRow = startPosX;
-    currentCol = startPosY;
-    currentOrientation = startOrientation;
+  
+    currentRow = maze.startPosX;
+    currentCol = maze.startPosY;
+    currentOrientation = maze.startOrientation;
     currentDistanceFromGoal = maze.mazeArray[currentRow][currentCol];
+    
     // printing it out
     maze.printArray();
 }
@@ -95,21 +67,21 @@ void Mouse :: updateMouse()
     prevCol = currentCol;
     prevDistanceFromGoal = currentDistanceFromGoal;
 
-    if(cheeseWhore->currentOrientation == 1)
+    if(currentOrientation == 1)
     {
-        cheeseWhore->currentRow--;
+        currentRow--;
     }
-    else if(cheeseWhore->currentOrientation == 2)
+    else if(currentOrientation == 2)
     {
-        cheeseWhore->currentCol++;
+        currentCol++;
     }
-    else if(cheeseWhore->currentOrientation == 3)
+    else if(currentOrientation == 3)
     {
-        cheeseWhore->currentRow++;
+        currentRow++;
     } 
-    else if(cheeseWhore->currentOrientation == 4)
+    else if(currentOrientation == 4)
     {
-        cheeseWhore->currentCol--;
+        currentCol--;
     }
 }
 
@@ -142,42 +114,42 @@ bool Mouse :: navigate(int possibleDirections[NUMSQUARES])
 
     newDirection = findLowestIndex(possibleDirections) + 1;
 
-    if(cheeseWhore->currentOrientation < newDirection)
+    if(currentOrientation < newDirection)
     {
-        while(cheeseWhore->currentOrientation < newDirection)
+        while(currentOrientation < newDirection)
         {
-            cheeseWhore->currentOrientation++;
+            currentOrientation++;
             updateMouse();
-            mazeArray[cheeseWhore->currentRow][cheeseWhore->currentCol] = cheeseWhore->currentOrientation;
-            mazeArray[cheeseWhore->prevRow][cheeseWhore->prevCol] = cheeseWhore->prevDistanceFromGoal;
-            printArray();
+            maze.mazeArray[currentRow][currentCol] = currentOrientation;
+            maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
+            maze.printArray();
         }
     }
-    else if(cheeseWhore->currentOrientation > newDirection)
+    else if(currentOrientation > newDirection)
     {
-        while(cheeseWhore->currentOrientation > newDirection)
+        while(currentOrientation > newDirection)
         {
-            cheeseWhore->currentOrientation--;
+            currentOrientation--;
             updateMouse();
-            mazeArray[cheeseWhore->currentRow][cheeseWhore->currentCol] = cheeseWhore->currentOrientation;
-            mazeArray[cheeseWhore->prevRow][cheeseWhore->prevCol] = cheeseWhore->prevDistanceFromGoal;
-            printArray();
+            maze.mazeArray[currentRow][currentCol] = currentOrientation;
+            maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
+            maze.printArray();
         }
     }
-    else if(cheeseWhore->currentOrientation == newDirection)
+    else if(currentOrientation == newDirection)
     {
         updateMouse();
-        mazeArray[cheeseWhore->currentRow][cheeseWhore->currentCol] = cheeseWhore->currentOrientation;
-        mazeArray[cheeseWhore->prevRow][cheeseWhore->prevCol] = cheeseWhore->prevDistanceFromGoal;
-        printArray();
+        maze.mazeArray[currentRow][currentCol] = currentOrientation;
+        maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
+        maze.printArray();
     }
 
 
-    cheeseWhore->currentDistanceFromGoal = possibleDirections[newDirection-1];
+    currentDistanceFromGoal = possibleDirections[newDirection-1];
     
-    if(cheeseWhore->currentDistanceFromGoal == 0)
+    if(currentDistanceFromGoal == 0)
     {
-        cheeseWhore->atGoal = true;
+        atGoal = true;
     }
 
     return true;
@@ -187,33 +159,33 @@ void Mouse :: findSurroundingValues(int surroundingSquares[NUMSQUARES])
 {
     int x = 1, y = 1, i = 0;
 
-    if(currentRow - y < row && currentRow - y >=0)
+    if(currentRow - y < maze.row && currentRow - y >=0)
     {
-        surroundingSquares[i++] = mazeArray[currentRow - y][currentCol];
+        surroundingSquares[i++] = maze.mazeArray[currentRow - y][currentCol];
     }
     else
     {
         surroundingSquares[i++] = INT_MAX;
     }
-    if(currentCol + x < col && cheeseWhore->currentCol >= 0)
+    if(currentCol + x < maze.col && currentCol >= 0)
     {
-        surroundingSquares[i++] = mazeArray[cheeseWhore->currentRow][cheeseWhore->currentCol + x];
+        surroundingSquares[i++] = maze.mazeArray[currentRow][currentCol + x];
     }
     else
     {
         surroundingSquares[i++] = INT_MAX;
     }
-    if(cheeseWhore->currentRow + y >= 0 && cheeseWhore->currentRow + y < row)
+    if(currentRow + y >= 0 && currentRow + y < maze.row)
     {
-        surroundingSquares[i++] = mazeArray[cheeseWhore->currentRow + y][cheeseWhore->currentCol];
+        surroundingSquares[i++] = maze.mazeArray[currentRow + y][currentCol];
     }
     else
     {
         surroundingSquares[i++] = INT_MAX;
     }
-    if(cheeseWhore->currentCol -x >= 0 && cheeseWhore->currentCol - x < col)
+    if(currentCol -x >= 0 && currentCol - x < maze.col)
     {
-        surroundingSquares[i++] = mazeArray[cheeseWhore->currentRow][cheeseWhore->currentCol - x];
+        surroundingSquares[i++] = maze.mazeArray[currentRow][currentCol - x];
     }
     else
     {
@@ -221,10 +193,10 @@ void Mouse :: findSurroundingValues(int surroundingSquares[NUMSQUARES])
     }
 }
 
-bool Maze :: Update(int **floodArray)
-{
-    if(mouse)
-}
+// bool Maze :: Update(int **floodArray)
+// {
+//     if(mouse)
+// }
 
 
 int main(int argc, char **argv)
@@ -242,17 +214,16 @@ int main(int argc, char **argv)
         number+= 0.00005; 
     }
 
-    Maze test = Maze(argv[1]);
-    
-    // std :: cout << "Proper input: ./a.out + 'filename.txt'\n";
+    Mouse rat = Mouse(argv[1]);
+    std :: cout << "Proper input: ./a.out + 'filename.txt'\n";
 
-    array = test.printArray();
+    array = rat.maze.printArray();
     cout << array;
-    while(!test.cheeseWhore->atGoal && navigateFlag)
+    while(!rat.atGoal && navigateFlag)
     {
         number = 0.0;
-        test.findSurroundingValues(potentialValues);
-        navigateFlag = test.navigate(potentialValues);
+        rat.findSurroundingValues(potentialValues);
+        navigateFlag = rat.navigate(potentialValues);
 
         while(number < 100)
         {
@@ -261,7 +232,7 @@ int main(int argc, char **argv)
             number+= 0.00005; 
         }
         
-        array = test.printArray();
+        array = rat.maze.printArray();
         cout << array;
     }
     return 0;
