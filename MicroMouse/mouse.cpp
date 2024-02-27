@@ -19,7 +19,6 @@ class Mouse
 
         Mouse(string filename);
         int checkDirection();
-        void constructMaze(string filename);
         void findSurroundingValues(int surroundingSquares[NUMSQUARES]);
         void updateMouse();
         bool navigate(int possibleDirections[NUMSQUARES]);
@@ -31,11 +30,11 @@ Mouse :: Mouse(string filename) : maze(filename)
     // input for maze file
 
     // iterators, offset for row and col and the maze/mouse itself
-
   
     currentRow = maze.startPosX;
     currentCol = maze.startPosY;
     currentOrientation = maze.startOrientation;
+    std :: cout << "HI im in the constructor:" << maze.startOrientation << "start x: " << maze.startPosX << "start y: " << maze.startPosY<< endl;
     currentDistanceFromGoal = maze.mazeArray[currentRow][currentCol];
     
     // printing it out
@@ -89,7 +88,7 @@ bool Mouse :: navigate(int possibleDirections[NUMSQUARES])
     int newDirection, x, y, i, j;
     if(currentOrientation > 4 || currentOrientation < 1)
     {
-        std :: cout << "startOrientation must be 1, 2, 3, or 4" << endl;
+        std :: cout << "startOrientation must be 1, 2, 3, or 4, it is currently:" << maze.startOrientation << endl;
         return false;
     }
 
@@ -186,6 +185,16 @@ int main(int argc, char **argv)
     int i, potentialValues[NUMSQUARES];
     bool navigateFlag = true;
     string array;
+
+    if(argv[1] == NULL)
+    {
+        cout << "proper input ./a.out filename.txt" << endl;
+        return 1;
+    }
+
+    Mouse rat = Mouse(argv[1]);
+
+    
     std :: cout << "Loading maze: \n";
     std :: cout << std::setprecision(2) << std::fixed;
     while(number < 100)
@@ -194,10 +203,7 @@ int main(int argc, char **argv)
         std :: cout << number;
         number+= 0.00005; 
     }
-
-    Mouse rat = Mouse(argv[1]);
-    std :: cout << "Proper input: ./a.out + 'filename.txt'\n";
-
+    
     array = rat.maze.printArray();
     cout << array;
     while(!rat.atGoal && navigateFlag)

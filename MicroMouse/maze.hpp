@@ -62,13 +62,15 @@ Maze :: Maze(string filename)
     string tempLine;
 
     // iterators, offset for row and col and the maze/mouse itself
-    int i, j, offsetRow, offsetCol, startPosX, startPosY, startOrientation;
+    int i, j, offsetRow, offsetCol;
 
     // opens file using filename param
     ift.open(filename);
 
     // actually taking input
     ift >> row >> col;
+
+    cout << row << ", " << col;
 
     // allocating memory to mazeArr (for variable sizes)
     mazeArray = new int*[row];
@@ -87,6 +89,8 @@ Maze :: Maze(string filename)
         }
     }
     ift >> startPosX >> startPosY >> startOrientation;
+
+    cout << startPosX << ", " << startPosY << ", " << startOrientation;
 
     // taking in coords of the goal (for variable goal locations)
     for(i = 0; i < 4; i++)
