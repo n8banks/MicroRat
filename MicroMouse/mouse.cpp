@@ -14,15 +14,22 @@ class Mouse
         int currentDistanceFromGoal;
         int prevDistanceFromGoal;
         bool atGoal;
-
+        bool wallLeft;
+        bool wallRight;
+        bool wallFront;
+        bool wallBack;
         Maze maze;
 
         Mouse(string filename);
         int checkDirection();
         void findSurroundingValues(int surroundingSquares[NUMSQUARES]);
         void updateMouse();
-        bool navigate(int possibleDirections[NUMSQUARES]);
+        void updateWalls();
+        void move(int direction);
+        bool isValid();
+        bool optimalPathBackTrack();
 
+        optimalPathList *path;
 };
 
 Mouse :: Mouse(string filename) : maze(filename)
@@ -36,7 +43,7 @@ Mouse :: Mouse(string filename) : maze(filename)
     currentOrientation = maze.startOrientation;
     std :: cout << "HI im in the constructor:" << maze.startOrientation << "start x: " << maze.startPosX << "start y: " << maze.startPosY<< endl;
     currentDistanceFromGoal = maze.mazeArray[currentRow][currentCol];
-    
+    path = createList(currentOrientation);
     // printing it out
     maze.printArray();
 }
@@ -64,6 +71,139 @@ void Mouse :: updateMouse()
         currentCol--;
     }
 }
+void Mouse :: updateWalls()
+{
+    if(wallFront && wallLeft && wallRight)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 13;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 12;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 11;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 14;
+        }
+    }
+    else if(wallFront && wallLeft && !wallRight)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 8;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 7;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 6;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 5;
+        }
+    }
+    else if(wallFront && wallRight && !wallLeft)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 7;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 6;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 5;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 8;
+        }
+    }
+    else if(wallLeft && wallRight && !wallFront)
+    { 
+        if(currentOrientation == 1 || currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 9;
+        }
+        else if(currentOrientation == 2 || currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 10;
+        }
+    }
+    else if(wallFront)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 2;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 3;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 4;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 1;
+        }
+    }
+    else if(wallLeft)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 1;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 2;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 3;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 4;
+        }
+    }
+    else if(wallRight)
+    {
+        if(currentOrientation == 1)
+        {
+            maze.floodArray[currentRow][currentCol] = 3;
+        }
+        else if(currentOrientation == 2)
+        {
+            maze.floodArray[currentRow][currentCol] = 4;
+        }
+        else if(currentOrientation == 3)
+        {
+            maze.floodArray[currentRow][currentCol] = 1;
+        }
+        else if(currentOrientation == 4)
+        {
+            maze.floodArray[currentRow][currentCol] = 2;
+        }
+    }
+    else if(!wallFront && !wallLeft && !wallRight)
+    {
+        maze.floodArray[currentRow][currentCol] = 15;
+    }
+}
+
 
 // when passing an array to function, it passes pointer to first element (relic of C)
 // need to pass array by reference 
@@ -78,105 +218,101 @@ int findLowestIndex(int possibleDirections[NUMSQUARES])
             currentLowest = possibleDirections[i];
         }
     }
-
     return retval;
 }
 
-// possible orientations: 1, 2, 3 ,4 meaning: 1: ^, 2: ->, 3: V, 4: <-
-bool Mouse :: navigate(int possibleDirections[NUMSQUARES])
+bool Mouse :: isValid()
 {
-    int newDirection, x, y, i, j;
-    if(currentOrientation > 4 || currentOrientation < 1)
+    int check = maze.floodArray[currentRow][currentCol];
+    
+    if(check == -1)
     {
-        std :: cout << "startOrientation must be 1, 2, 3, or 4, it is currently:" << maze.startOrientation << endl;
         return false;
     }
-
-    newDirection = findLowestIndex(possibleDirections) + 1;
-
-    if(currentOrientation < newDirection)
+    else if(currentOrientation == 1)
     {
-        while(currentOrientation < newDirection)
+        if(check == 4 || check == 5 || check == 6 || check == 10 || check == 12 || check == 14 || check == 16)
         {
-            currentOrientation++;
-            updateMouse();
-            maze.mazeArray[currentRow][currentCol] = currentOrientation;
-            maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
-            maze.printArray();
+            return false;
+        }
+        else
+        {
+            return true;
         }
     }
-    else if(currentOrientation > newDirection)
+    else if(currentOrientation == 2)
     {
-        while(currentOrientation > newDirection)
+        if(check == 1 || check == 5 || check == 8 || check == 9 || check == 11 || check == 13 || check == 14 || check == 16)
         {
-            currentOrientation--;
-            updateMouse();
-            maze.mazeArray[currentRow][currentCol] = currentOrientation;
-            maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
-            maze.printArray();
+            return false;
+        }
+        else
+        {
+            return true;
         }
     }
-    else if(currentOrientation == newDirection)
+    else if(currentOrientation == 3)
     {
-        updateMouse();
-        maze.mazeArray[currentRow][currentCol] = currentOrientation;
-        maze.mazeArray[prevRow][prevCol] = prevDistanceFromGoal;
-        maze.printArray();
+        if(check == 2 || check == 7 || check == 8 || check == 10 || check == 12 || check == 13 || check == 14 || check == 16)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
-
-
-    currentDistanceFromGoal = possibleDirections[newDirection-1];
-    
-    if(currentDistanceFromGoal == 0)
+    else if(currentOrientation == 4)
     {
-        atGoal = true;
+        if(check == 3 || check == 6 || check == 9 || check == 11 || check == 12 || check == 13 || check == 16)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
-
-    return true;
+    else
+    {
+        return false;
+    }
 }
+// possible orientations: 1, 2, 3 ,4 meaning: 1: ^, 2: ->, 3: V, 4: <-
 
-void Mouse :: findSurroundingValues(int surroundingSquares[NUMSQUARES])
+
+void Mouse :: move(int direction)
 {
-    int x = 1, y = 1, i = 0;
-
-    if(currentRow - y < maze.row && currentRow - y >=0)
-    {
-        surroundingSquares[i++] = maze.mazeArray[currentRow - y][currentCol];
-    }
-    else
-    {
-        surroundingSquares[i++] = INT_MAX;
-    }
-    if(currentCol + x < maze.col && currentCol >= 0)
-    {
-        surroundingSquares[i++] = maze.mazeArray[currentRow][currentCol + x];
-    }
-    else
-    {
-        surroundingSquares[i++] = INT_MAX;
-    }
-    if(currentRow + y >= 0 && currentRow + y < maze.row)
-    {
-        surroundingSquares[i++] = maze.mazeArray[currentRow + y][currentCol];
-    }
-    else
-    {
-        surroundingSquares[i++] = INT_MAX;
-    }
-    if(currentCol -x >= 0 && currentCol - x < maze.col)
-    {
-        surroundingSquares[i++] = maze.mazeArray[currentRow][currentCol - x];
-    }
-    else
-    {
-        surroundingSquares[i++] = INT_MAX;
-    }
+    
 }
-
-// bool Maze :: Update(int **floodArray)
-// {
-//     if(mouse)
-// }
+bool Mouse :: optimalPathBackTrack()
+{
+    int i;
+    if(atGoal)
+    {
+        return true;
+    }
+    else 
+    {
+        for(i = 0; i < 4; i++)
+        {
+            if(isValid())
+            {
+                move(currentOrientation);
+                if(optimalPathBackTrack())
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                currentOrientation = currentOrientation % 4 + 1;
+                return optimalPathBackTrack();
+            }
+        }
+    }
+    return false;
+}
 
 
 int main(int argc, char **argv)
@@ -210,7 +346,7 @@ int main(int argc, char **argv)
     {
         number = 0.0;
         rat.findSurroundingValues(potentialValues);
-        navigateFlag = rat.navigate(potentialValues);
+        //navigateFlag = rat.navigate(potentialValues);
 
         while(number < 100)
         {
@@ -222,5 +358,10 @@ int main(int argc, char **argv)
         array = rat.maze.printArray();
         cout << array;
     }
+
+    optimalPathList *path = createList(0);
+    insertNode(1, path);
+    insertNode(2,path);
+    printList(path);
     return 0;
 }

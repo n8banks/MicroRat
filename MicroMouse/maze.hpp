@@ -11,6 +11,19 @@
 
 using namespace std;
 
+typedef struct node
+{
+    int direction;
+    struct node *next;
+    struct node *prev;
+}node;
+
+typedef struct optimalPathList
+{
+    node *head;
+    node *tail;
+    int count;
+}optimalPathList;
 
 class Maze
 {
@@ -26,11 +39,9 @@ class Maze
         int **mazeArray;
         int **floodArray;
 
-        bool Update(int **floodArray);
-        bool navigate(int possibleDirections[NUMSQUARES]);
         string printArray();
-        void findSurroundingValues(int surroundingSquares[NUMSQUARES]);
-        void updateMouse();
+        void update(int r, int c, int newVal);
+
 
         Maze(string filename);
         
@@ -79,15 +90,26 @@ Maze :: Maze(string filename)
         mazeArray[i] = new int[col];
     }
 
-    floodArray = new int*[row];
-    for(i = 0; i < row; i++)
+    floodArray = new int*[row + 2];
+    for(i = 0; i < row + 2; i++)
     {
-        floodArray[i] = new int[col];
-        for(j = 0; j < col; j++)
+        floodArray[i] = new int[col + 2];
+        for(j = 0; j < col + 2; j++)
         {
             floodArray[i][j] = 0;
         }
     }
+
+    for(i = 0; i < col + 2; i++)
+    {
+        floodArray[0][i] = - 1;
+        floodArray[row + 2][i] = - 1;
+    }
+    for(i = 1; i < row + 1; i++)
+    {
+        floodArray[i][0] = - 1;
+        floodArray[i][col + 2] = - 1;
+    } 
     ift >> startPosX >> startPosY >> startOrientation;
 
     cout << startPosX << ", " << startPosY << ", " << startOrientation;
@@ -129,7 +151,61 @@ Maze :: Maze(string filename)
     printArray();
 }
 
-// bool Maze :: Update(int **floodArray)
-// {
-//     if(mouse)
-// }
+void Maze :: update(int r, int c, int newVal)
+{
+    mazeArray[r][c] = newVal;
+}
+
+node *createNode(int direction, node *prev)
+{
+    node *newNode = (node*)malloc(sizeof(node));
+    
+    if(prev != NULL)
+        newNode->next = prev->next;
+    else
+        newNode->next = NULL;
+
+    newNode->prev = prev;
+    newNode->direction = direction;
+    cout << " NODE MADE! :D\n";
+    return newNode;
+}
+
+void destroyNode(node *victim)
+{
+    if(victim->next != NULL)
+    {
+        destroyNode(victim->next);
+    }
+    victim->prev->next = NULL;
+    free(victim);
+}
+
+optimalPathList* createList(int startValue)
+{
+    optimalPathList *newList = (optimalPathList*)malloc(sizeof(optimalPathList));
+    newList->head = createNode(startValue, NULL);
+    newList->tail = newList->head;
+    newList->count = 1;
+    return newList;
+}
+
+void insertNode(int direction, optimalPathList *list)
+{
+    node *temp = list->tail;
+    list->tail->next = createNode(direction, temp);
+    list->tail = temp->next;
+    list->count++;
+}
+
+void printList(optimalPathList *list)
+{
+    node *temp = list->head;
+    int i;
+
+    for(i = 0; i < list->count; i++)
+    {
+        cout << temp->direction << " ";
+        temp = temp->next;
+    }
+}
